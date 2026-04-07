@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Cadastro — Orçai{% endblock %}
+{% block body %}
+<main class="flex flex-1 items-center justify-center px-4 py-12">
+  <div class="w-full max-w-md rounded-2xl border border-white/10 bg-card p-8 shadow-xl shadow-orchid/10">
+    <h1 class="text-center text-2xl font-semibold text-white">Criar conta</h1>
+    <form method="post" class="mt-6 space-y-4">
+      {% csrf_token %}
+      {% for field in form %}
+        <div>
+          <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-slate-300">{{ field.label }}</label>
+          {{ field.errors }}
+          <div class="mt-1">{{ field }}</div>
+        </div>
+      {% endfor %}
+      <button type="submit" class="w-full rounded-lg bg-gradient-to-r from-orchid to-skyfi py-2.5 font-semibold text-white hover:opacity-95">
+        Cadastrar
+      </button>
+    </form>
+    <p class="mt-4 text-center text-sm text-slate-400">
+      Já tem conta? <a href="{% url 'users:login' %}" class="text-skyfi hover:underline">Entrar</a>
+    </p>
+  </div>
+</main>
+<style>
+  form input:not([type="checkbox"]) {
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: #0B0B12;
+    padding: 0.5rem 0.75rem;
+    color: #fff;
+    outline: none;
+  }
+  form input:focus {
+    ring: 2px;
+    ring-color: #4DA6FF;
+  }
+</style>
+{% endblock %}

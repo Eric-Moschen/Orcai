@@ -1,0 +1,35 @@
+{% extends "layouts/app_shell.html" %}
+{% block title %}Categorias — Orçai{% endblock %}
+{% block app_main %}
+<div class="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+  <div>
+    <h1 class="text-2xl font-semibold text-white">Categorias</h1>
+    <p class="mt-1 text-sm text-slate-400">Organize receitas e despesas com cores.</p>
+  </div>
+  <a href="{% url 'finance:category_create' %}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-orchid px-4 py-2.5 text-sm font-semibold text-white hover:opacity-95">
+    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+    Nova categoria
+  </a>
+</div>
+<div class="mt-8 overflow-hidden rounded-2xl border border-white/10 bg-card">
+  {% if categories %}
+  <ul class="divide-y divide-white/5">
+    {% for c in categories %}
+    <li class="flex flex-wrap items-center gap-3 px-4 py-4 sm:px-5">
+      <span class="h-4 w-4 shrink-0 rounded-full ring-2 ring-white/20" style="background-color: {{ c.color }}"></span>
+      <div class="min-w-0 flex-1">
+        <p class="font-medium text-white">{{ c.name }}</p>
+        <p class="text-xs text-slate-500">{{ c.get_kind_display }} · ordem {{ c.sort_order }}</p>
+      </div>
+      <div class="flex gap-2">
+        <a href="{% url 'finance:category_update' c.pk %}" class="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/5">Editar</a>
+        <a href="{% url 'finance:category_delete' c.pk %}" class="rounded-lg border border-red-500/30 px-3 py-1.5 text-xs text-red-300 hover:bg-red-500/10">Excluir</a>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="px-5 py-10 text-center text-slate-400">Nenhuma categoria ainda. Crie a primeira para classificar suas transações.</p>
+  {% endif %}
+</div>
+{% endblock %}

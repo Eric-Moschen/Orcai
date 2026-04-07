@@ -1,0 +1,112 @@
+{% extends "layouts/app_shell.html" %}
+{% block title %}Transações — Orçai{% endblock %}
+{% block app_main %}
+<div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+  <div>
+    <h1 class="text-2xl font-semibold text-white">Transações</h1>
+    <p class="mt-1 text-sm text-slate-400">Filtre por período, categoria e tipo.</p>
+    <p class="mt-2 text-xs"><a href="{% url 'dashboard:home' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}" class="text-skyfi hover:underline">Ver resumo no painel com estes filtros</a></p>
+  </div>
+  <a href="{% url 'finance:transaction_create' %}" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-orchid px-4 py-2.5 text-sm font-semibold text-white hover:opacity-95">
+    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+    Nova transação
+  </a>
+</div>
+
+<form method="get" class="mt-6 grid gap-3 rounded-2xl border border-white/10 bg-card p-4 sm:grid-cols-2 lg:grid-cols-4 lg:items-end">
+  <div>
+    <label class="block text-xs font-medium text-slate-400">Período</label>
+    <select name="period" class="mt-1 w-full rounded-lg border border-white/10 bg-night px-3 py-2 text-sm text-white focus:ring-2 focus:ring-skyfi">
+      <option value="this_month" {% if period == 'this_month' %}selected{% endif %}>Mês atual</option>
+      <option value="last_month" {% if period == 'last_month' %}selected{% endif %}>Mês anterior</option>
+      <option value="custom" {% if period == 'custom' %}selected{% endif %}>Personalizado</option>
+    </select>
+  </div>
+  <div>
+    <label class="block text-xs font-medium text-slate-400">De</label>
+    <input type="date" name="date_from" value="{{ filter_date_from|date:'Y-m-d' }}" class="mt-1 w-full rounded-lg border border-white/10 bg-night px-3 py-2 text-sm text-white focus:ring-2 focus:ring-skyfi">
+  </div>
+  <div>
+    <label class="block text-xs font-medium text-slate-400">Até</label>
+    <input type="date" name="date_to" value="{{ filter_date_to|date:'Y-m-d' }}" class="mt-1 w-full rounded-lg border border-white/10 bg-night px-3 py-2 text-sm text-white focus:ring-2 focus:ring-skyfi">
+  </div>
+  <div>
+    <label class="block text-xs font-medium text-slate-400">Tipo</label>
+    <select name="type" class="mt-1 w-full rounded-lg border border-white/10 bg-night px-3 py-2 text-sm text-white focus:ring-2 focus:ring-skyfi">
+      <option value="">Todos</option>
+      <option value="income" {% if filter_type == 'income' %}selected{% endif %}>Receita</option>
+      <option value="expense" {% if filter_type == 'expense' %}selected{% endif %}>Despesa</option>
+    </select>
+  </div>
+  <div>
+    <label class="block text-xs font-medium text-slate-400">Categoria</label>
+    <select name="category" class="mt-1 w-full rounded-lg border border-white/10 bg-night px-3 py-2 text-sm text-white focus:ring-2 focus:ring-skyfi">
+      <option value="">Todas</option>
+      {% for c in category_choices %}
+      <option value="{{ c.pk }}" {% if filter_category == c.pk|stringformat:'s' %}selected{% endif %}>{{ c.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="sm:col-span-2">
+    <label class="block text-xs font-medium text-slate-400">Busca na descrição</label>
+    <input type="search" name="q" value="{{ filter_q }}" placeholder="Ex.: supermercado" class="mt-1 w-full rounded-lg border border-white/10 bg-night px-3 py-2 text-sm text-white focus:ring-2 focus:ring-skyfi">
+  </div>
+  <div class="flex gap-2 sm:col-span-2 lg:col-span-1">
+    <button type="submit" class="flex-1 rounded-xl bg-skyfi/90 py-2.5 text-sm font-semibold text-night hover:bg-skyfi">Aplicar</button>
+    <a href="{% url 'finance:transaction_list' %}" class="rounded-xl border border-white/15 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5">Limpar</a>
+  </div>
+</form>
+
+<div class="mt-8 overflow-x-auto rounded-2xl border border-white/10 bg-card">
+  <table class="min-w-full text-left text-sm">
+    <thead class="border-b border-white/10 text-xs uppercase tracking-wide text-slate-500">
+      <tr>
+        <th class="px-4 py-3">Data</th>
+        <th class="px-4 py-3">Descrição</th>
+        <th class="px-4 py-3">Categoria</th>
+        <th class="px-4 py-3 text-right">Valor</th>
+        <th class="px-4 py-3 text-right">Ações</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-white/5">
+      {% for t in transactions %}
+      <tr class="hover:bg-white/[0.02]">
+        <td class="whitespace-nowrap px-4 py-3 text-slate-400">{{ t.occurred_on|date:"d/m/Y" }}</td>
+        <td class="px-4 py-3">
+          <span class="font-medium text-white">{{ t.description }}</span>
+          {% if t.installment_plan_id %}
+          <span class="ml-2 rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] text-slate-300">Parcela {{ t.installment_number }}/{{ t.installment_plan.installment_count }}</span>
+          {% endif %}
+          {% if t.is_recurring %}
+          <span class="ml-1 text-[10px] text-slate-500">recorrente</span>
+          {% endif %}
+        </td>
+        <td class="px-4 py-3">
+          {% if t.category %}
+          <span class="inline-flex items-center gap-1.5 text-slate-300">
+            <span class="h-2 w-2 rounded-full" style="background:{{ t.category.color }}"></span>
+            {{ t.category.name }}
+          </span>
+          {% else %}
+          <span class="text-slate-500">—</span>
+          {% endif %}
+        </td>
+        <td class="px-4 py-3 text-right font-semibold tabular-nums {% if t.transaction_type == 'income' %}text-emerald-400{% else %}text-rose-300{% endif %}">
+          {% if t.transaction_type == 'income' %}+{% else %}−{% endif %} R$ {{ t.amount|floatformat:2 }}
+        </td>
+        <td class="px-4 py-3 text-right whitespace-nowrap">
+          <a href="{% url 'finance:transaction_update' t.pk %}" class="text-skyfi hover:underline">Editar</a>
+          <span class="mx-2 text-slate-600">|</span>
+          <a href="{% url 'finance:transaction_delete' t.pk %}" class="text-red-300 hover:underline">Excluir</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5" class="px-4 py-12 text-center text-slate-400">Nenhuma transação neste filtro.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

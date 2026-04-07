@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block body %}
+{% include "partials/flash_messages.html" %}
+{% include "partials/app_nav.html" %}
+<main class="mx-auto w-full max-w-5xl flex-1 px-4 pb-28 pt-6">
+  {% block app_main %}{% endblock %}
+</main>
+{% include "partials/fab.html" %}
+{% endblock %}

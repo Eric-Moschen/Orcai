@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Orçai{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            orchid: '#6C4CF1',
+            skyfi: '#4DA6FF',
+            night: '#0B0B12',
+            card: '#14141F',
+          },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="min-h-full bg-night text-slate-100 antialiased">
+  <div class="min-h-full flex flex-col">
+    {% block body %}{% endblock %}
+  </div>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{% with path=request.path %}
+<header class="sticky top-0 z-40 border-b border-white/10 bg-card/90 backdrop-blur">
+  <div class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3">
+    <a href="{% url 'dashboard:home' %}" class="flex items-center gap-2 text-lg font-semibold tracking-tight text-white">
+      <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-orchid to-skyfi text-sm font-bold">O</span>
+      Orçai
+    </a>
+    <nav class="flex flex-wrap items-center gap-1 text-sm">
+      <a href="{% url 'dashboard:home' %}" class="rounded-lg px-3 py-1.5 {% if path == '/' %}bg-white/10 text-white{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">Painel</a>
+      <a href="{% url 'finance:transaction_list' %}" class="rounded-lg px-3 py-1.5 {% if '/transacoes' in path %}bg-white/10 text-white{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">Transações</a>
+      <a href="{% url 'finance:category_list' %}" class="rounded-lg px-3 py-1.5 {% if '/categorias' in path %}bg-white/10 text-white{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">Categorias</a>
+      <a href="{% url 'finance:recurring_list' %}" class="rounded-lg px-3 py-1.5 {% if '/contas-fixas' in path %}bg-white/10 text-white{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">Contas fixas</a>
+    </nav>
+    <div class="flex items-center gap-2">
+      <span class="hidden max-w-[140px] truncate text-xs text-slate-500 sm:inline">{{ user.email }}</span>
+      <form action="{% url 'users:logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit" class="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-medium text-slate-300 hover:border-white/20 hover:text-white">Sair</button>
+      </form>
+    </div>
+  </div>
+</header>
+{% endwith %}

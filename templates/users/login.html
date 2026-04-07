@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Entrar — Orçai{% endblock %}
+{% block body %}
+<main class="flex flex-1 items-center justify-center px-4 py-12">
+  <div class="w-full max-w-md rounded-2xl border border-white/10 bg-card p-8 shadow-xl shadow-orchid/10">
+    <h1 class="text-center text-2xl font-semibold text-white">Orçai</h1>
+    <p class="mt-1 text-center text-sm text-slate-400">Controle financeiro pessoal</p>
+    {% if form.non_field_errors %}
+      <div class="mt-4 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+    <form method="post" action="" class="mt-6 space-y-4">
+      {% csrf_token %}
+      <div>
+        <label for="id_username" class="block text-sm font-medium text-slate-300">E-mail</label>
+        <input type="email" name="username" id="id_username" required autofocus
+          class="mt-1 w-full rounded-lg border border-white/10 bg-night px-3 py-2 text-white outline-none ring-skyfi focus:ring-2"
+          value="{{ form.username.value|default:'' }}">
+        {% if form.username.errors %}<p class="mt-1 text-xs text-red-400">{{ form.username.errors }}</p>{% endif %}
+      </div>
+      <div>
+        <label for="id_password" class="block text-sm font-medium text-slate-300">Senha</label>
+        <input type="password" name="password" id="id_password" required
+          class="mt-1 w-full rounded-lg border border-white/10 bg-night px-3 py-2 text-white outline-none ring-skyfi focus:ring-2">
+        {% if form.password.errors %}<p class="mt-1 text-xs text-red-400">{{ form.password.errors }}</p>{% endif %}
+      </div>
+      <button type="submit" class="w-full rounded-lg bg-gradient-to-r from-orchid to-skyfi py-2.5 font-semibold text-white hover:opacity-95">
+        Entrar
+      </button>
+    </form>
+    <p class="mt-4 text-center text-sm text-slate-400">
+      <a href="{% url 'users:password_reset' %}" class="text-skyfi hover:underline">Esqueci minha senha</a>
+      ·
+      <a href="{% url 'users:register' %}" class="text-skyfi hover:underline">Criar conta</a>
+    </p>
+  </div>
+</main>
+{% endblock %}

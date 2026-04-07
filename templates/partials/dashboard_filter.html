@@ -1,0 +1,22 @@
+<form method="get" class="grid gap-3 rounded-2xl border border-white/10 bg-card p-4 sm:grid-cols-2 lg:grid-cols-5 lg:items-end">
+  <div>
+    <label class="block text-xs font-medium text-slate-400">Período</label>
+    <select name="period" class="mt-1 w-full rounded-lg border border-white/10 bg-night px-3 py-2 text-sm text-white focus:ring-2 focus:ring-skyfi">
+      <option value="this_month" {% if period == 'this_month' %}selected{% endif %}>Mês atual</option>
+      <option value="last_month" {% if period == 'last_month' %}selected{% endif %}>Mês anterior</option>
+      <option value="custom" {% if period == 'custom' %}selected{% endif %}>Personalizado</option>
+    </select>
+  </div>
+  <div>
+    <label class="block text-xs font-medium text-slate-400">De</label>
+    <input type="date" name="date_from" value="{{ filter_date_from|date:'Y-m-d' }}" class="mt-1 w-full rounded-lg border border-white/10 bg-night px-3 py-2 text-sm text-white focus:ring-2 focus:ring-skyfi">
+  </div>
+  <div>
+    <label class="block text-xs font-medium text-slate-400">Até</label>
+    <input type="date" name="date_to" value="{{ filter_date_to|date:'Y-m-d' }}" class="mt-1 w-full rounded-lg border border-white/10 bg-night px-3 py-2 text-sm text-white focus:ring-2 focus:ring-skyfi">
+  </div>
+  <div class="sm:col-span-2 lg:col-span-2 flex flex-wrap gap-2">
+    <button type="submit" class="flex-1 rounded-xl bg-skyfi/90 py-2.5 text-sm font-semibold text-night hover:bg-skyfi">Aplicar ao painel</button>
+    <a href="{% url 'dashboard:home' %}" class="rounded-xl border border-white/15 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5">Limpar</a>
+  </div>
+</form>

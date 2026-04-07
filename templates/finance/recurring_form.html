@@ -1,0 +1,24 @@
+{% extends "layouts/app_shell.html" %}
+{% block title %}{% if object %}Editar{% else %}Nova{% endif %} conta fixa — Orçai{% endblock %}
+{% block app_main %}
+<h1 class="text-2xl font-semibold text-white">{% if object %}Editar conta fixa{% else %}Nova conta fixa{% endif %}</h1>
+<p class="mt-2 text-sm text-slate-400">Contas fixas geram lembretes mensais. Ao marcar como pago, uma despesa é registrada automaticamente.</p>
+<form method="post" class="mt-8 max-w-lg space-y-5">
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+  <div class="rounded-lg border border-red-500/40 bg-red-950/50 px-3 py-2 text-sm text-red-200">{{ form.non_field_errors }}</div>
+  {% endif %}
+  {% for field in form %}
+  <div>
+    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-slate-300">{{ field.label }}</label>
+    {{ field }}
+    {% if field.help_text %}<p class="mt-1 text-xs text-slate-500">{{ field.help_text }}</p>{% endif %}
+    {% if field.errors %}<p class="mt-1 text-xs text-red-400">{{ field.errors }}</p>{% endif %}
+  </div>
+  {% endfor %}
+  <div class="flex flex-wrap gap-3 pt-2">
+    <button type="submit" class="rounded-xl bg-gradient-to-r from-emerald-600 to-skyfi px-5 py-2.5 text-sm font-semibold text-white hover:opacity-95">Salvar</button>
+    <a href="{% url 'finance:recurring_list' %}" class="rounded-xl border border-white/15 px-5 py-2.5 text-sm text-slate-300 hover:bg-white/5">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

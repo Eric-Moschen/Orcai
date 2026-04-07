@@ -1,0 +1,11 @@
+{% extends "layouts/app_shell.html" %}
+{% block title %}Excluir conta fixa — Orçai{% endblock %}
+{% block app_main %}
+<h1 class="text-2xl font-semibold text-white">Excluir conta fixa</h1>
+<p class="mt-2 text-slate-400">Remover <strong class="text-white">{{ object.name }}</strong>? O histórico de transações já criadas não será apagado.</p>
+<form method="post" class="mt-8 flex flex-wrap gap-3">
+  {% csrf_token %}
+  <button type="submit" class="rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-500">Excluir</button>
+  <a href="{% url 'finance:recurring_list' %}" class="rounded-xl border border-white/15 px-5 py-2.5 text-sm text-slate-300 hover:bg-white/5">Cancelar</a>
+</form>
+{% endblock %}

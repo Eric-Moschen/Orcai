@@ -1,0 +1,107 @@
+{% extends "layouts/app_shell.html" %}
+{% block title %}{% if object %}Editar{% else %}Nova{% endif %} transação — Orçai{% endblock %}
+{% block app_main %}
+<h1 class="text-2xl font-semibold text-white">{% if object %}Editar transação{% else %}Nova transação{% endif %}</h1>
+{% if object and object.installment_plan_id %}
+<p class="mt-2 rounded-lg border border-amber-500/30 bg-amber-950/40 px-3 py-2 text-sm text-amber-100">
+  Esta linha faz parte do parcelamento <strong>{{ object.installment_plan.title }}</strong>. Alterar valor ou data afeta só esta parcela.
+</p>
+{% endif %}
+{% if not object %}
+<p class="mt-2 text-sm text-slate-400">Dica: a categoria pode ser sugerida automaticamente pela descrição, com base no seu histórico.</p>
+{% endif %}
+
+<form method="post" class="mt-6 max-w-xl space-y-5">
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+  <div class="rounded-lg border border-red-500/40 bg-red-950/50 px-3 py-2 text-sm text-red-200">{{ form.non_field_errors }}</div>
+  {% endif %}
+
+  <div>
+    <label class="block text-sm font-medium text-slate-300" for="id_description">Descrição</label>
+    {{ form.description }}
+    {{ form.description.errors }}
+  </div>
+  <div>
+    <label class="block text-sm font-medium text-slate-300" for="id_amount">Valor total</label>
+    {{ form.amount }}
+    {% if 'is_installment' in form.fields %}
+    <p class="mt-1 text-xs text-slate-500">Em parcelamentos, este valor é o total da compra.</p>
+    {% endif %}
+    {{ form.amount.errors }}
+  </div>
+  <div>
+    <label class="block text-sm font-medium text-slate-300" for="id_transaction_type">Tipo</label>
+    {{ form.transaction_type }}
+    {{ form.transaction_type.errors }}
+  </div>
+  <div>
+    <label class="block text-sm font-medium text-slate-300" for="id_category">Categoria</label>
+    <select name="{{ form.category.name }}" id="id_category" class="mt-1 w-full rounded-lg border border-white/10 bg-[#0B0B12] px-3 py-2 text-white outline-none focus:ring-2 focus:ring-skyfi">
+      <option value="">---------</option>
+      {% for choice in form.category.field.queryset %}
+      <option value="{{ choice.pk }}" data-kind="{{ choice.kind }}"
+        {% if form.category.value == choice.pk or form.category.value|stringformat:'s' == choice.pk|stringformat:'s' %}selected{% endif %}>{{ choice.name }}</option>
+      {% endfor %}
+    </select>
+    {{ form.category.errors }}
+  </div>
+  <div>
+    <label class="block text-sm font-medium text-slate-300" for="id_occurred_on">Data</label>
+    {{ form.occurred_on }}
+    {{ form.occurred_on.errors }}
+  </div>
+  <div class="flex items-center gap-2">
+    {{ form.is_recurring }}
+    <label class="text-sm text-slate-300" for="id_is_recurring">Marcar como recorrente</label>
+  </div>
+  {{ form.is_recurring.errors }}
+
+  {% if 'is_installment' in form.fields %}
+  <div class="rounded-xl border border-white/10 bg-night/80 p-4 space-y-4">
+    <p class="text-sm font-medium text-white">Parcelamento</p>
+    <div class="flex items-center gap-2">
+      {{ form.is_installment }}
+      <label class="text-sm text-slate-300" for="id_is_installment">Parcelar esta despesa</label>
+    </div>
+    {{ form.is_installment.errors }}
+    <div>
+      <label class="block text-sm font-medium text-slate-300" for="id_installment_count">Quantidade de parcelas</label>
+      {{ form.installment_count }}
+      {{ form.installment_count.errors }}
+    </div>
+  </div>
+  {% endif %}
+
+  <div>
+    <label class="block text-sm font-medium text-slate-300" for="id_notes">Observações</label>
+    {{ form.notes }}
+    {{ form.notes.errors }}
+  </div>
+
+  <div class="flex flex-wrap gap-3 pt-2">
+    <button type="submit" class="rounded-xl bg-gradient-to-r from-orchid to-skyfi px-5 py-2.5 text-sm font-semibold text-white hover:opacity-95">Salvar</button>
+    <a href="{% url 'finance:transaction_list' %}" class="rounded-xl border border-white/15 px-5 py-2.5 text-sm text-slate-300 hover:bg-white/5">Cancelar</a>
+  </div>
+</form>
+
+<script>
+(function () {
+  var typeEl = document.getElementById('id_transaction_type');
+  var cat = document.getElementById('id_category');
+  if (!typeEl || !cat) return;
+  function syncCategories() {
+    var t = typeEl.value;
+    Array.prototype.forEach.call(cat.options, function (opt) {
+      if (!opt.value) { opt.disabled = false; return; }
+      var k = opt.getAttribute('data-kind');
+      var ok = k === 'both' || (t === 'income' && k === 'income') || (t === 'expense' && k === 'expense');
+      opt.disabled = !ok;
+      if (!ok && opt.selected) { opt.selected = false; }
+    });
+  }
+  typeEl.addEventListener('change', syncCategories);
+  syncCategories();
+})();
+</script>
+{% endblock %}

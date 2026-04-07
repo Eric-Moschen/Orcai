@@ -1,0 +1,94 @@
+{% extends "layouts/app_shell.html" %}
+{% block title %}Contas fixas — Orçai{% endblock %}
+{% block app_main %}
+<div class="flex flex-col gap-4 lg:flex-row lg:items-start">
+  <div class="flex-1">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h1 class="text-2xl font-semibold text-white">Contas fixas</h1>
+        <p class="mt-1 text-sm text-slate-400">Mês de referência: {{ bill_month|stringformat:'02d' }}/{{ bill_year }}</p>
+      </div>
+      <a href="{% url 'finance:recurring_create' %}" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Nova conta fixa
+      </a>
+    </div>
+
+    <div class="mt-8 overflow-hidden rounded-2xl border border-white/10 bg-card">
+      {% if bills %}
+      <ul class="divide-y divide-white/5">
+        {% for b in bills %}
+        <li class="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-medium text-white">{{ b.name }}</span>
+              {% if not b.is_active %}
+              <span class="rounded-md bg-slate-700 px-2 py-0.5 text-[10px] uppercase text-slate-300">Inativa</span>
+              {% endif %}
+              {% if b.current_occ.is_paid %}
+              <span class="rounded-md bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-300">Pago</span>
+              {% else %}
+              <span class="rounded-md bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-200">Pendente</span>
+              {% endif %}
+            </div>
+            <p class="mt-1 text-xs text-slate-500">
+              Vence dia {{ b.due_day }} · próxima data: {{ b.due_this_month|date:"d/m/Y" }}
+              · {% if b.days_until == 0 %}vence hoje{% elif b.days_until > 0 %}em {{ b.days_until }} dia{{ b.days_until|pluralize }}{% elif b.overdue_days %}atrasado {{ b.overdue_days }} dia{{ b.overdue_days|pluralize }}{% endif %}
+            </p>
+            <p class="mt-1 text-sm text-slate-400">
+              <span class="inline-flex items-center gap-1.5">
+                <span class="h-2 w-2 rounded-full" style="background:{{ b.category.color }}"></span>
+                {{ b.category.name }}
+              </span>
+              · R$ {{ b.amount|floatformat:2 }}
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            {% if b.is_active %}
+              {% if b.current_occ.is_paid %}
+              <form action="{% url 'finance:recurring_unpay' b.pk %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="year" value="{{ bill_year }}">
+                <input type="hidden" name="month" value="{{ bill_month }}">
+                <button type="submit" class="rounded-lg border border-white/15 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/5">Desmarcar</button>
+              </form>
+              {% else %}
+              <form action="{% url 'finance:recurring_mark_paid' b.pk %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="year" value="{{ bill_year }}">
+                <input type="hidden" name="month" value="{{ bill_month }}">
+                <button type="submit" class="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500">Marcar pago</button>
+              </form>
+              {% endif %}
+            {% endif %}
+            <a href="{% url 'finance:recurring_update' b.pk %}" class="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-skyfi hover:bg-white/5">Editar</a>
+            <a href="{% url 'finance:recurring_delete' b.pk %}" class="rounded-lg border border-red-500/30 px-3 py-1.5 text-xs text-red-300 hover:bg-red-500/10">Excluir</a>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="px-5 py-10 text-center text-slate-400">Nenhuma conta fixa. Adicione aluguel, internet, assinaturas etc.</p>
+      {% endif %}
+    </div>
+    {% include "partials/pagination.html" %}
+  </div>
+
+  <aside class="w-full shrink-0 lg:w-72">
+    <div class="rounded-2xl border border-white/10 bg-card p-4">
+      <h2 class="text-sm font-semibold text-white">Próximas a vencer</h2>
+      <p class="mt-1 text-xs text-slate-500">Contas ativas ainda não pagas neste mês.</p>
+      <ul class="mt-4 space-y-3">
+        {% for b in upcoming_bills %}
+        <li class="rounded-lg border border-white/5 bg-night/50 px-3 py-2">
+          <p class="text-sm font-medium text-white">{{ b.name }}</p>
+          <p class="text-xs text-slate-500">{{ b.due_this_month|date:"d/m" }} · R$ {{ b.amount|floatformat:2 }}</p>
+        </li>
+        {% empty %}
+        <li class="text-xs text-slate-500">Nada pendente. Bom trabalho!</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </aside>
+</div>
+{% endblock %}

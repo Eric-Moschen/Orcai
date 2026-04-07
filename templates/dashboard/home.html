@@ -1,0 +1,246 @@
+{% extends "layouts/app_shell.html" %}
+{% block title %}Painel — Orçai{% endblock %}
+{% block app_main %}
+<div>
+  <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold text-white">Painel</h1>
+      <p class="mt-1 text-sm text-slate-400">
+        Período: {{ data.date_from|date:"d/m/Y" }} — {{ data.date_to|date:"d/m/Y" }}
+        · Comparando com {{ data.prev_from|date:"d/m/Y" }} — {{ data.prev_to|date:"d/m/Y" }}
+      </p>
+    </div>
+  </div>
+
+  {% include "partials/dashboard_filter.html" %}
+
+  {# Resumo #}
+  <section class="mt-8 grid gap-4 sm:grid-cols-3">
+    <div class="rounded-2xl border border-white/10 bg-card p-5 shadow-lg shadow-black/20 transition hover:border-emerald-500/30">
+      <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Receitas</p>
+      <p class="mt-2 text-2xl font-bold tabular-nums text-emerald-400">R$ {{ data.totals.income|floatformat:2 }}</p>
+      {% if data.pct_income is not None %}
+      <p class="mt-1 text-xs {% if data.pct_income >= 0 %}text-emerald-400/80{% else %}text-rose-400/80{% endif %}">
+        {% if data.pct_income >= 0 %}↑{% else %}↓{% endif %} {{ data.pct_income|floatformat:1 }}% vs período anterior
+      </p>
+      {% endif %}
+    </div>
+    <div class="rounded-2xl border border-white/10 bg-card p-5 shadow-lg shadow-black/20 transition hover:border-rose-500/30">
+      <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Despesas</p>
+      <p class="mt-2 text-2xl font-bold tabular-nums text-rose-300">R$ {{ data.totals.expense|floatformat:2 }}</p>
+      {% if data.pct_expense is not None %}
+      <p class="mt-1 text-xs {% if data.pct_expense <= 0 %}text-emerald-400/80{% else %}text-rose-400/80{% endif %}">
+        {% if data.pct_expense >= 0 %}↑{% else %}↓{% endif %} {{ data.pct_expense|floatformat:1 }}% vs período anterior
+      </p>
+      {% endif %}
+    </div>
+    <div class="rounded-2xl border border-white/10 bg-card p-5 shadow-lg shadow-black/20 transition hover:border-skyfi/40">
+      <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Saldo (receitas − despesas)</p>
+      <p class="mt-2 text-2xl font-bold tabular-nums {% if data.totals.balance >= 0 %}text-emerald-400{% else %}text-rose-400{% endif %}">
+        R$ {{ data.totals.balance|floatformat:2 }}
+      </p>
+      {% if data.pct_balance is not None %}
+      <p class="mt-1 text-xs text-slate-500">Variação do saldo vs período anterior: {{ data.pct_balance|floatformat:1 }}%</p>
+      {% endif %}
+    </div>
+  </section>
+
+  {# Score #}
+  <section class="mt-6 rounded-2xl border border-white/10 bg-gradient-to-r from-orchid/20 to-skyfi/10 p-5">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p class="text-xs font-medium uppercase tracking-wide text-slate-400">Saúde financeira</p>
+        <p class="mt-1 text-3xl font-bold text-white">{{ health_score }}<span class="text-lg text-slate-500">/100</span></p>
+      </div>
+      <div class="h-3 w-full max-w-md overflow-hidden rounded-full bg-night/80 sm:mx-4">
+        <div class="h-full rounded-full bg-gradient-to-r from-orchid to-skyfi transition-all duration-700" style="width: {{ health_score }}%"></div>
+      </div>
+    </div>
+  </section>
+
+  {# Gráficos #}
+  <section class="mt-8 grid gap-6 lg:grid-cols-2">
+    <div class="rounded-2xl border border-white/10 bg-card p-4">
+      <h2 class="text-sm font-semibold text-white">Despesas por categoria</h2>
+      {% if pie_chart.labels %}
+      <div class="relative mx-auto mt-4 h-64 max-w-sm">
+        <canvas id="chart-pie" aria-label="Gráfico de pizza"></canvas>
+      </div>
+      <ul class="mt-4 space-y-2 text-sm text-slate-400">
+        {% for row in data.expense_by_category %}
+        <li class="flex justify-between gap-2">
+          <span class="inline-flex items-center gap-2">
+            <span class="h-2 w-2 rounded-full" style="background:{{ row.color }}"></span>
+            {{ row.name }}
+          </span>
+          <span class="tabular-nums text-slate-300">R$ {{ row.amount|floatformat:2 }} · {{ row.percent|floatformat:0 }}%</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="mt-6 text-center text-sm text-slate-500">Sem despesas no período para exibir.</p>
+      {% endif %}
+    </div>
+    <div class="rounded-2xl border border-white/10 bg-card p-4">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h2 class="text-sm font-semibold text-white">Evolução financeira</h2>
+        <div class="flex gap-1 rounded-lg border border-white/10 p-0.5 text-xs">
+          <a href="?{% if qs_nopage %}{{ qs_nopage }}&{% endif %}evolution=cumulative" class="rounded-md px-2 py-1 {% if evolution_mode == 'cumulative' %}bg-white/10 text-white{% else %}text-slate-500 hover:text-white{% endif %}">Saldo acumulado</a>
+          <a href="?{% if qs_nopage %}{{ qs_nopage }}&{% endif %}evolution=flow" class="rounded-md px-2 py-1 {% if evolution_mode == 'flow' %}bg-white/10 text-white{% else %}text-slate-500 hover:text-white{% endif %}">Receitas × despesas</a>
+        </div>
+      </div>
+      <div class="relative mt-4 h-72 w-full">
+        <canvas id="chart-line" aria-label="Gráfico de linha"></canvas>
+      </div>
+    </div>
+  </section>
+
+  {{ pie_chart|json_script:"orcai-pie-data" }}
+  {{ line_chart|json_script:"orcai-line-data" }}
+
+  {# Insights #}
+  <section class="mt-8 rounded-2xl border border-white/10 bg-card p-5">
+    <h2 class="text-lg font-semibold text-white">Insights</h2>
+    {% if insights %}
+    <ul class="mt-4 space-y-3">
+      {% for ins in insights %}
+      <li class="flex gap-3 rounded-xl border border-white/5 bg-night/40 px-4 py-3 text-sm
+        {% if ins.tone == 'positive' %}border-emerald-500/20 text-emerald-100
+        {% elif ins.tone == 'warning' %}border-amber-500/25 text-amber-100
+        {% elif ins.tone == 'danger' %}border-rose-500/25 text-rose-100
+        {% else %}text-slate-300{% endif %}">
+        <span class="mt-0.5 text-orchid">✦</span>
+        <span>{{ ins.text }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="mt-4 text-sm text-slate-500">Sem insights adicionais para este período — registre mais transações para análises mais ricas.</p>
+    {% endif %}
+  </section>
+
+  <div class="mt-8 grid gap-6 lg:grid-cols-2">
+    {# Contas a vencer #}
+    <section class="rounded-2xl border border-white/10 bg-card p-5">
+      <h2 class="text-lg font-semibold text-white">Contas a vencer (7 dias)</h2>
+      {% if upcoming %}
+      <ul class="mt-4 divide-y divide-white/5">
+        {% for u in upcoming %}
+        <li class="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0">
+          <div>
+            <p class="font-medium text-white">{{ u.bill.name }}</p>
+            <p class="text-xs text-slate-500">{{ u.due_date|date:"d/m/Y" }} · R$ {{ u.bill.amount|floatformat:2 }}
+              {% if u.days_until == 0 %}· hoje{% elif u.days_until == 1 %}· amanhã{% else %}· em {{ u.days_until }} dias{% endif %}
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            {% if u.occurrence_is_paid %}
+            <span class="rounded-md bg-emerald-500/20 px-2 py-1 text-xs text-emerald-300">Pago</span>
+            {% else %}
+            <span class="rounded-md bg-amber-500/20 px-2 py-1 text-xs text-amber-200">Pendente</span>
+            <form action="{% url 'finance:recurring_mark_paid' u.bill.pk %}" method="post" class="inline">
+              {% csrf_token %}
+              <input type="hidden" name="year" value="{{ u.due_date.year }}">
+              <input type="hidden" name="month" value="{{ u.due_date.month }}">
+              <input type="hidden" name="origin" value="dashboard">
+              <button type="submit" class="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500">Pagar</button>
+            </form>
+            {% endif %}
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="mt-4 text-sm text-slate-500">Nenhuma conta fixa com vencimento nos próximos 7 dias.</p>
+      {% endif %}
+      <a href="{% url 'finance:recurring_list' %}" class="mt-4 inline-block text-sm text-skyfi hover:underline">Ver todas as contas fixas</a>
+    </section>
+
+    {# Últimas transações #}
+    <section class="rounded-2xl border border-white/10 bg-card p-5">
+      <h2 class="text-lg font-semibold text-white">Últimas transações</h2>
+      {% if recent %}
+      <ul class="mt-4 divide-y divide-white/5">
+        {% for t in recent %}
+        <li class="flex flex-wrap items-center justify-between gap-2 py-3 first:pt-0">
+          <div class="min-w-0">
+            <p class="truncate font-medium text-white">{{ t.description }}</p>
+            <p class="text-xs text-slate-500">{{ t.occurred_on|date:"d/m/Y" }}
+              {% if t.category %}· <span class="inline-flex items-center gap-1"><span class="h-1.5 w-1.5 rounded-full" style="background:{{ t.category.color }}"></span>{{ t.category.name }}</span>{% endif %}
+            </p>
+          </div>
+          <span class="shrink-0 font-semibold tabular-nums {% if t.transaction_type == 'income' %}text-emerald-400{% else %}text-rose-300{% endif %}">
+            {% if t.transaction_type == 'income' %}+{% else %}−{% endif %} R$ {{ t.amount|floatformat:2 }}
+          </span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="mt-4 text-sm text-slate-500">Nenhuma transação ainda.</p>
+      {% endif %}
+      <a href="{% url 'finance:transaction_list' %}" class="mt-4 inline-block text-sm text-skyfi hover:underline">Ver todas</a>
+    </section>
+  </div>
+
+  {# Atalhos #}
+  <div class="mt-10 grid gap-4 sm:grid-cols-3">
+    <a href="{% url 'finance:transaction_list' %}" class="rounded-2xl border border-white/10 bg-card p-5 transition hover:border-skyfi/40">
+      <h3 class="font-semibold text-white">Transações</h3>
+      <p class="mt-1 text-sm text-slate-500">Filtros avançados e parcelamento</p>
+    </a>
+    <a href="{% url 'finance:category_list' %}" class="rounded-2xl border border-white/10 bg-card p-5 transition hover:border-orchid/40">
+      <h3 class="font-semibold text-white">Categorias</h3>
+      <p class="mt-1 text-sm text-slate-500">Cores e tipos</p>
+    </a>
+    <a href="{% url 'finance:recurring_list' %}" class="rounded-2xl border border-white/10 bg-card p-5 transition hover:border-emerald-500/40">
+      <h3 class="font-semibold text-white">Contas fixas</h3>
+      <p class="mt-1 text-sm text-slate-500">Mês completo</p>
+    </a>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+<script>
+(function () {
+  const common = {
+    color: '#94a3b8',
+    borderColor: 'rgba(255,255,255,0.08)',
+    grid: { color: 'rgba(255,255,255,0.06)' },
+  };
+  const pieEl = document.getElementById('chart-pie');
+  const lineEl = document.getElementById('chart-line');
+  const pieData = JSON.parse(document.getElementById('orcai-pie-data').textContent);
+  const lineData = JSON.parse(document.getElementById('orcai-line-data').textContent);
+
+  if (pieEl && pieData.labels && pieData.labels.length) {
+    new Chart(pieEl, {
+      type: 'doughnut',
+      data: pieData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: common.color, boxWidth: 12 } },
+        },
+      },
+    });
+  }
+  if (lineEl && lineData.labels && lineData.labels.length) {
+    new Chart(lineEl, {
+      type: 'line',
+      data: lineData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { intersect: false, mode: 'index' },
+        scales: {
+          x: { ticks: { color: common.color, maxRotation: 0 }, grid: { color: common.grid } },
+          y: { ticks: { color: common.color }, grid: { color: common.grid } },
+        },
+        plugins: { legend: { labels: { color: common.color } } },
+      },
+    });
+  }
+})();
+</script>
+{% endblock %}
